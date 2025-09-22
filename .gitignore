@@ -1,0 +1,31 @@
+# Node modules
+node_modules/
+
+# Build output
+.next/
+dist/
+build/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local environment variables
+.env
+.env.local
+.env.*.local
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editor specific files
+.vscode/
+.idea/
+
+# Lock files (optional, अगर team fix version use नहीं कर रही)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml

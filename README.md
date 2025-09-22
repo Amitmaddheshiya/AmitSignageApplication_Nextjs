@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Signage Next.js (Local Browser) — Updated Project with Persistence & Sequential Playback
 
 ## What's new in this updated package
@@ -20,3 +21,7 @@
 
 ## Notes
 - Large video files may consume browser storage and could be subject to quota limits. For heavy usage, a desktop packaged app is recommended (Electron).
+=======
+# AmitSignageApplication_Nextjs
+yah application se ham signage par add dikha sakte hai cms web se content manage kar sakte hai 
+>>>>>>> b4487bc0ad69b902abb6fca44eea6469c56e8711

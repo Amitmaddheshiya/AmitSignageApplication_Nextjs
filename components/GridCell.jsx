@@ -115,88 +115,98 @@ export default function GridCell({ id, media = [], onReplace, settings }) {
     });
   };
 
-  return (
+return (
+  <div
+    className="cell"
+    onClick={openPicker}   // 👈 kahin bhi click karne par upload open hoga
+    onMouseEnter={() => setHover(true)}
+    onMouseLeave={() => setHover(false)}
+    style={{ cursor: "pointer" }} // 👈 cursor pointer dikhane ke liye
+  >
+    <input
+      ref={inputRef}
+      className="uploader"
+      type="file"
+      accept="image/*,video/*"
+      multiple
+      onChange={handleInput}
+      style={{ display: "none" }} // 👈 hidden input
+    />
+
+    {/* Agar aap chahte ho ki button bhi dikhai de to yeh rakh sakte ho */}
+    {hover && (
+      <div className="hover-upload">
+        <button
+          className="btn"
+          onClick={(e) => {
+            e.stopPropagation(); // 👈 button click par parent ka click trigger na ho
+            openPicker();
+          }}
+        >
+          Upload
+        </button>
+      </div>
+    )}
+
     <div
-      className="cell"
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
+      className="media-grid"
+      style={{
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
+        position: "relative",
+      }}
     >
-      <input
-        ref={inputRef}
-        className="uploader"
-        type="file"
-        accept="image/*,video/*"
-        multiple
-        onChange={handleInput}
-      />
-      {hover && (
-        <div className="hover-upload">
-          <button className="btn" onClick={openPicker}>
-            Upload
-          </button>
+      {items.length === 0 && (
+        <div style={{ color: "#777", textAlign: "center" }}>
+          Click anywhere to upload images/videos
         </div>
       )}
 
-     <div
-  className="media-grid"
-  style={{
-    width: "100%",
-    height: "100%",
-    overflow: "hidden",
-    position: "relative",
-  }}
->
-
-        {items.length === 0 && (
-          <div style={{ color: "#777" }}>
-            Hover here and click Upload to add images/videos
-          </div>
-        )}
-
-        {items.length > 0 && (
-          <div
-            key={animateKey}
-            className={slideClass}
-            style={{
-              width: "100%",
-              height: "100%",
-              position: "absolute",
-              top: 0,
-              left: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
+      {items.length > 0 && (
+        <div
+          key={animateKey}
+          className={slideClass}
+          style={{
+            width: "100%",
+            height: "100%",
+            position: "absolute",
+            top: 0,
+            left: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
           {items[currentIndex].type === "image" ? (
-  <img
-    src={items[currentIndex].url}
-    alt={items[currentIndex].name}
-    style={{
-      width: "100%",
-      height: "100%",
-      objectFit: "cover",   // 👈 yaha lagana hai
-    }}
-  />
-) : (
-  <video
-    ref={videoRef}
-    src={items[currentIndex].url}
-    autoPlay
-    playsInline
-    muted
-    onEnded={onVideoEnded}
-    style={{
-      width: "100%",
-      height: "100%",
-      objectFit: "cover",   // 👈 yaha lagana hai
-    }}
-  />
-)}
-
-          </div>
-        )}
-      </div>
+            <img
+              src={items[currentIndex].url}
+              alt={items[currentIndex].name}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+              }}
+            />
+          ) : (
+            <video
+              ref={videoRef}
+              src={items[currentIndex].url}
+              autoPlay
+              playsInline
+              muted
+              onEnded={onVideoEnded}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+              }}
+            />
+          )}
+        </div>
+      )}
     </div>
-  );
+  </div>
+);
+
 }

@@ -39,13 +39,21 @@ export default function SignageBoard({deviceId}) {
       try{
         const id = deviceId || (typeof window !== 'undefined' ? localStorage.getItem('signage_device_id') : null);
         if(id){ const sv = await fetchSettingsFromServer(id); if(sv) setSettings(prev=>({...prev,...sv})); }
-        const iv = setInterval(async ()=>{
-          const id2 = deviceId || (typeof window !== 'undefined' ? localStorage.getItem('signage_device_id') : null);
-          if(id2){
-            const ss = await fetchSettingsFromServer(id2);
-            if(ss) setSettings(prev=>({...prev,...ss}));
-          }
-        }, 15000);
+   const iv = setInterval(async ()=>{
+  const id2 = deviceId || (typeof window !== 'undefined' ? localStorage.getItem('signage_device_id') : null);
+  if(id2){
+    const ss = await fetchSettingsFromServer(id2);
+    if (ss) {
+      const localSaved = await loadSettings();
+      setSettings(prev => ({
+        ...prev,
+        ...(localSaved || {}),
+        ...ss // ss wins only if server has newer data
+      }));
+    }
+  }
+}, 15000);
+
         return ()=>clearInterval(iv);
       }catch(e){console.error(e)}
     })();

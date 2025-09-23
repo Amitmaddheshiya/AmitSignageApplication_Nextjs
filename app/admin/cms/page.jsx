@@ -89,31 +89,37 @@ useEffect(() => { loadDevices(); }, []);
   };
 
   // ✅ Save device/global settings
-  const save = async (applyGlobal = false) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      window.location.href = "/admin/login";
-      return;
-    }
+ const save = async (applyGlobal = false) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    window.location.href = "/admin/login";
+    return;
+  }
 
-    setMsg('Saving...');
-    const res = await fetch('/api/settings/update', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify({ deviceId, settings, applyGlobal })
-    });
+  if (!applyGlobal && !deviceId) {
+    setMsg("Please enter or select a device ID before saving.");
+    return;
+  }
 
-    const j = await res.json();
-    if (res.ok) {
-      setMsg('Saved');
-      setTimeout(() => setMsg(''), 1500);
-    } else {
-      setMsg('Error: ' + (j.error || 'failed'));
-    }
-  };
+  setMsg('Saving...');
+  const res = await fetch('/api/settings/update', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ deviceId, settings, applyGlobal })
+  });
+
+  const j = await res.json();
+  if (res.ok) {
+    setMsg('Saved');
+    setTimeout(() => setMsg(''), 1500);
+  } else {
+    setMsg('Error: ' + (j.error || 'failed'));
+  }
+};
+
 
   return (
     <div style={{ maxWidth: 900, margin: '20px auto' }}>

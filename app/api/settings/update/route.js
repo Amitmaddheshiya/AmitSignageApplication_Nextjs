@@ -30,8 +30,19 @@ export async function POST(req){
     const db = client.db('signage');
     const coll = db.collection('settings');
     if(applyGlobal){
-      await coll.updateOne({scope:'global'},{$set:{...settings, scope:'global', updatedAt:new Date()}},{upsert:true});
-      return new Response(JSON.stringify({ok:true}),{status:200});
+     await coll.updateOne(
+  { deviceId }, // filter by deviceId
+  {
+    $set: {
+      ...settings,
+      deviceId,
+      owner: user.email,
+      updatedAt: new Date(),
+    },
+  },
+  { upsert: true } // ✅ will update if exists, insert if not
+);
+
     }
     if(!deviceId) return new Response(JSON.stringify({error:'deviceId required'}),{status:400});
     const devices = db.collection('devices');

@@ -8,10 +8,33 @@ export default function SidePanel({ settings, onClose, onChange }){
   useEffect(()=> setLocal(settings || {}), [settings]);
 
   const apply = async ()=>{
+  try {
+    // ✅ Local update
     onChange(local);
     await saveSettings(local);
-    onClose();
-  };
+
+    // ✅ Server update (IMPORTANT)
+    const token = localStorage.getItem("token"); // if you are using auth
+    await fetch('/api/settings/update', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ 
+        deviceId: localStorage.getItem('signage_device_id') || "", 
+        settings: local,
+        applyGlobal: false   // or true if you want global update
+      })
+    });
+
+  } catch (err) {
+    console.error("Failed to save settings to server", err);
+  }
+
+  onClose();
+};
+
 
   return (
     <div className="side-panel" role="dialog" aria-modal="true">

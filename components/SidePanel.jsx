@@ -64,21 +64,19 @@ export default function SidePanel({ settings, onClose, onChange }) {
   };
 
   return (
-    <div className="side-panel" style={styles.overlay}>
+    <div style={styles.overlay}>
       <div style={styles.panel}>
         {/* Header */}
         <div style={styles.header}>
-          <h2 style={{ margin: 0 }}>Customization</h2>
-          <button style={styles.closeBtn} onClick={onClose}>
-            ✕
-          </button>
+          <h2 style={{ margin: 0, color: "#007BFF" }}>🎨 Customization</h2>
+          <button style={styles.closeBtn} onClick={onClose}>✕</button>
         </div>
 
-        {/* Content */}
+        {/* Scrollable Content */}
         <div style={styles.content}>
           {/* Grid & Layout Section */}
           <section style={styles.section}>
-            <h4 style={styles.sectionTitle}>Grid & Layout</h4>
+            <h4 style={styles.sectionTitle}>📐 Grid & Layout</h4>
             <div style={styles.formRow}>
               <label>Grid Type</label>
               <select
@@ -117,7 +115,7 @@ export default function SidePanel({ settings, onClose, onChange }) {
 
           {/* Slide Settings */}
           <section style={styles.section}>
-            <h4 style={styles.sectionTitle}>Slide Settings</h4>
+            <h4 style={styles.sectionTitle}>🖼 Slide Settings</h4>
             <div style={styles.formRow}>
               <label>Slide Direction (Grid 1)</label>
               <select
@@ -173,7 +171,7 @@ export default function SidePanel({ settings, onClose, onChange }) {
 
           {/* Ticker Section */}
           <section style={styles.section}>
-            <h4 style={styles.sectionTitle}>Ticker Settings</h4>
+            <h4 style={styles.sectionTitle}>📝 Ticker Settings</h4>
             <div style={styles.formRow}>
               <label>
                 <input
@@ -228,20 +226,20 @@ export default function SidePanel({ settings, onClose, onChange }) {
               />
             </div>
           </section>
+        </div>
 
-          {/* Apply Button */}
-          <div style={{ textAlign: "center", marginTop: 20 }}>
-            <button style={styles.applyBtn} onClick={apply}>
-              Apply & Close
-            </button>
-          </div>
+        {/* Apply Button Always Visible */}
+        <div style={styles.applyWrapper}>
+          <button style={styles.applyBtn} onClick={apply}>
+            ✅ Apply & Close
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-// Simple styles
+// Styles
 const styles = {
   overlay: {
     position: "fixed",
@@ -251,60 +249,68 @@ const styles = {
     left: 0,
     background: "rgba(0,0,0,0.5)",
     display: "flex",
-    justifyContent: "flex-end",
+    justifyContent: "flex-start",
     zIndex: 1000,
   },
   panel: {
     background: "#fff",
-    width: 360,
+    width: 380,
     height: "100%",
-    padding: 20,
     display: "flex",
     flexDirection: "column",
-    boxShadow: "-4px 0 12px rgba(0,0,0,0.2)",
-    overflowY: "auto",
+    boxShadow: "-4px 0 15px rgba(0,0,0,0.3)",
+    overflow: "hidden",
   },
   header: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    borderBottom: "1px solid #eee",
-    paddingBottom: 10,
-    marginBottom: 15,
+    padding: "15px 20px",
+    borderBottom: "2px solid #007BFF",
   },
   closeBtn: {
     background: "none",
     border: "none",
-    fontSize: 20,
+    fontSize: 22,
     cursor: "pointer",
+    color: "#007BFF",
   },
   content: {
     flex: 1,
+    padding: "15px 20px",
+    overflowY: "auto",
   },
   section: {
     marginBottom: 20,
     paddingBottom: 10,
-    borderBottom: "1px solid #f0f0f0",
+    borderBottom: "1px solid #e0e0e0",
+    
   },
   sectionTitle: {
     marginBottom: 10,
     fontSize: 16,
     fontWeight: 600,
-    color: "#333",
+    color: "#007BFF",
   },
   formRow: {
     display: "flex",
     flexDirection: "column",
     marginBottom: 12,
   },
+  applyWrapper: {
+    padding: 15,
+    borderTop: "1px solid #e0e0e0",
+    background: "#f9f9f9",
+  },
   applyBtn: {
-    background: "#4CAF50",
+    background: "#007BFF",
     color: "#fff",
-    padding: "10px 15px",
+    padding: "12px 20px",
     border: "none",
-    borderRadius: 5,
+    borderRadius: 6,
     cursor: "pointer",
     fontWeight: "bold",
     width: "100%",
+    fontSize: 16,
   },
 };

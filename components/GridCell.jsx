@@ -2,13 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { saveMedia, loadMedia, clearMedia } from "../lib/storage";
 
-function parseRatio(ratio) {
-  if (!ratio) return "16 / 9";
-  if (ratio === "16:9") return "16 / 9";
-  if (ratio === "4:3") return "4 / 3";
-  if (ratio === "1:1") return "1 / 1";
-  return "1 / 1"; // default
-}
+
 
 export default function GridCell({ id, media = [], onReplace, settings }) {
   const [hover, setHover] = useState(false);

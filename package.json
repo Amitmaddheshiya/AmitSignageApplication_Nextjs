@@ -20,12 +20,9 @@
     "jsonwebtoken": "^9.0.0",
     "mongodb": "^4.17.2",
     "mongoose": "^8.18.1",
-    "next": "^15.5.3",
+    "next": "^15.5.4",
     "next-pwa": "^5.6.0",
-    "react": "18.2.0",
-    "react-dom": "18.2.0"
-  },
-  "devDependencies": {
-    "@next/swc-win32-x64-msvc": "^15.5.3"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   }
 }

@@ -4,21 +4,21 @@ import jwt from 'jsonwebtoken';
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_jwt_secret';
 
 async function getUserFromReq(req){
-  try{
-    // check Authorization Bearer first
+  try {
     const auth = req.headers.get('authorization')||'';
     const mAuth = auth.match(/Bearer\s+(.+)/i);
     if(mAuth){
       try{ return jwt.verify(mAuth[1], JWT_SECRET); }catch(e){}
     }
+
     const cookie = req.headers.get('cookie')||'';
     const m = cookie.match(/signage_auth=([^;]+)/);
     if(!m) return null;
     const token = m[1];
-    const data = jwt.verify(token, JWT_SECRET);
-    return data;
+    return jwt.verify(token, JWT_SECRET);
   }catch(e){ return null; }
 }
+
 
 export async function POST(req){
   try{
@@ -54,7 +54,12 @@ export async function POST(req){
     if(dev && !dev.owner){
       await (db.collection('devices')).updateOne({deviceId},{$set:{owner:user.email}},{upsert:false});
     }
-    await coll.updateOne({deviceId},{$set:{...settings, deviceId, owner:user.email, updatedAt:new Date()}},{upsert:true});
+   await coll.updateOne(
+  {deviceId},
+  {$set: {...settings, deviceId, owner:user.email, updatedAt:new Date()}},
+  {upsert:true}
+);
+
     const saved = await coll.findOne({deviceId});
     return new Response(JSON.stringify({ok:true, settings:saved}),{status:200, headers:{'Content-Type':'application/json'}});
   }catch(e){ return new Response(JSON.stringify({error:e.message}),{status:500});}

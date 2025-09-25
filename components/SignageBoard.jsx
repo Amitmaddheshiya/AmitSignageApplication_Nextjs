@@ -4,21 +4,21 @@ import GridCell from "./GridCell";
 import SidePanel from "./SidePanel";
 import { loadSettings, saveSettings, loadMedia } from "../lib/storage";
 
-export default function SignageBoard({ deviceId }) {
-  const fetchSettingsFromServer = async (deviceIdParam) => {
-    try {
-      const q = deviceIdParam
-        ? "/api/settings/get?deviceId=" + encodeURIComponent(deviceIdParam)
-        : "/api/settings/get";
-      const r = await fetch(q);
-      const j = await r.json();
-      return j.settings || null;
-    } catch (e) {
-      console.error("fetch settings", e);
-      return null;
-    }
-  };
+// Helper: DB se token fetch
+async function fetchTokenFromDB(deviceId) {
+  try {
+    const res = await fetch(`/api/devices/getToken?deviceId=${encodeURIComponent(deviceId)}`);
+    const data = await res.json();
+    if (res.ok && data.token) return data.token;
+    console.error("Token fetch failed:", data.error);
+    return null;
+  } catch (err) {
+    console.error("Token fetch error:", err);
+    return null;
+  }
+}
 
+export default function SignageBoard({ deviceId }) {
   const [grids, setGrids] = useState({ g1: [], g2: [] });
   const [settings, setSettings] = useState({
     gridType: "2",
@@ -31,57 +31,22 @@ export default function SignageBoard({ deviceId }) {
     tickerFontFamily: "Arial, sans-serif",
     tickerFontColor: "#ffffff",
     tickerBgColor: "#000000",
+    orientation: "horizontal",
+    rotation: 0,
+    slideDirectionG1: "left",
+    slideDirectionG2: "right",
   });
   const [showPanel, setShowPanel] = useState(false);
-
-  // Load server settings periodically
-  useEffect(() => {
-    (async () => {
-      try {
-        const id =
-          deviceId ||
-          (typeof window !== "undefined"
-            ? localStorage.getItem("signage_device_id")
-            : null);
-        if (id) {
-          const sv = await fetchSettingsFromServer(id);
-          if (sv) setSettings((prev) => ({ ...prev, ...sv }));
-        }
-
-        const iv = setInterval(async () => {
-          const id2 =
-            deviceId ||
-            (typeof window !== "undefined"
-              ? localStorage.getItem("signage_device_id")
-              : null);
-          if (id2) {
-            const ss = await fetchSettingsFromServer(id2);
-            if (ss) {
-              const localSaved = await loadSettings();
-              setSettings((prev) => ({
-                ...prev,
-                ...(localSaved || {}),
-                ...ss,
-              }));
-            }
-          }
-        }, 15000);
-
-        return () => clearInterval(iv);
-      } catch (e) {
-        console.error(e);
-      }
-    })();
-  }, [deviceId]);
 
   // Load saved media and settings from IndexedDB
   useEffect(() => {
     (async () => {
-      const s = await loadSettings();
+      const s = await loadSettings(deviceId);
       if (s) setSettings((prev) => ({ ...prev, ...s }));
 
       const g1 = await loadMedia("g1");
       const g2 = await loadMedia("g2");
+
       if (g1 && g1.length) {
         setGrids((prev) => ({
           ...prev,
@@ -105,41 +70,65 @@ export default function SignageBoard({ deviceId }) {
         }));
       }
     })();
-  }, []);
+  }, [deviceId]);
 
   const handleUploadReplace = (gridId, items) => {
     setGrids((prev) => ({ ...prev, [gridId]: items }));
   };
 
+  // Handle settings change from SidePanel
   const handleSettingsChange = async (s) => {
-    setSettings((prev) => ({ ...prev, ...s }));
-    await saveSettings({ ...settings, ...s });
+    const newSettings = { ...settings, ...s };
+    setSettings(newSettings);
+
+    try {
+      // IndexedDB update
+      await saveSettings(deviceId, newSettings);
+
+      // MongoDB token fetch
+      const token = await fetchTokenFromDB(deviceId);
+      if (!token) throw new Error("No token available in DB");
+
+      // Server update
+      await fetch("/api/settings/update", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          deviceId,
+          settings: newSettings,
+          applyGlobal: false,
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to save settings:", err);
+    }
   };
 
-  // ✅ Hybrid remote & mouse right click handling
+  // Remote & right-click toggle for SidePanel
   useEffect(() => {
     let lastPress = 0;
-
     const handleBackLike = (e) => {
       const now = Date.now();
-      const isBackEvent =
-        e.key === "Backspace" || e.type === "contextmenu";
+      const isBackEvent = e.key === "Backspace" || e.type === "contextmenu";
 
       if (!isBackEvent) return;
 
       if (now - lastPress < 500) {
         lastPress = 0;
-        if (e.key === "Backspace") window.history.back(); // double back → default
-        return; // double right click → default
+        if (e.key === "Backspace") window.history.back();
+        return;
       }
 
       lastPress = now;
-      e.preventDefault(); // block first back/right click
+      e.preventDefault();
       setShowPanel((prev) => !prev);
     };
 
-    window.addEventListener("keydown", handleBackLike); // remote back
-    window.addEventListener("contextmenu", handleBackLike); // mouse right click
+    window.addEventListener("keydown", handleBackLike);
+    window.addEventListener("contextmenu", handleBackLike);
 
     return () => {
       window.removeEventListener("keydown", handleBackLike);
@@ -156,19 +145,25 @@ export default function SignageBoard({ deviceId }) {
           width: "100%",
           height: "100%",
           gridTemplateColumns:
-            settings.gridType === "2"
-              ? settings.selectRatio === "1:1"
-                ? "1fr 1fr"
-                : settings.selectRatio === "1:2"
+            settings.orientation === "horizontal"
+              ? settings.gridType === "2"
+                ? settings.selectRatio === "1:2"
+                  ? "1fr 2fr"
+                  : settings.selectRatio === "2:1"
+                  ? "2fr 1fr"
+                  : "1fr 1fr"
+                : "1fr"
+              : "1fr",
+          gridTemplateRows:
+            settings.orientation === "vertical" && settings.gridType === "2"
+              ? settings.selectRatio === "1:2"
                 ? "1fr 2fr"
                 : settings.selectRatio === "2:1"
                 ? "2fr 1fr"
-                : settings.selectRatio === "1:3"
-                ? "1fr 3fr"
-                : settings.selectRatio === "3:1"
-                ? "3fr 1fr"
                 : "1fr 1fr"
               : "1fr",
+          transform: `rotate(${settings.rotation || 0}deg)`,
+          transformOrigin: "center center",
         }}
       >
         <GridCell
@@ -187,7 +182,6 @@ export default function SignageBoard({ deviceId }) {
         )}
       </div>
 
-      {/* Ticker */}
       {settings.tickerEnabled && (
         <div
           className="ticker"
@@ -202,7 +196,6 @@ export default function SignageBoard({ deviceId }) {
         </div>
       )}
 
-      {/* Side Panel */}
       {showPanel && (
         <SidePanel
           settings={settings}

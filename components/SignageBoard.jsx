@@ -105,33 +105,60 @@ export default function SignageBoard({ deviceId }) {
   };
 
   // Remote & right-click toggle for SidePanel
-  useEffect(() => {
-    let lastPress = 0;
-    const handleBackLike = (e) => {
-      const now = Date.now();
-      const isBackEvent = e.key === "Backspace" || e.type === "contextmenu";
+useEffect(() => {
+  let lastPress = 0;
 
-      if (!isBackEvent) return;
+  const handleToggle = (e) => {
+    const now = Date.now();
 
-      if (now - lastPress < 500) {
-        lastPress = 0;
-        if (e.key === "Backspace") window.history.back();
-        return;
-      }
+    // Check typing fields
+    const activeEl = document.activeElement;
+    const isTyping =
+      activeEl &&
+      (activeEl.tagName === "INPUT" ||
+        activeEl.tagName === "TEXTAREA" ||
+        activeEl.isContentEditable);
+    if (isTyping) return;
 
-      lastPress = now;
-      e.preventDefault();
-      setShowPanel((prev) => !prev);
-    };
+    const isBackspace = e.key === "Backspace";
+    const isContextMenu = e.type === "contextmenu";
 
-    window.addEventListener("keydown", handleBackLike);
-    window.addEventListener("contextmenu", handleBackLike);
+    if (!isBackspace && !isContextMenu) return;
 
-    return () => {
-      window.removeEventListener("keydown", handleBackLike);
-      window.removeEventListener("contextmenu", handleBackLike);
-    };
-  }, []);
+    e.preventDefault();
+
+    // Double press/double click detection
+    if (now - lastPress < 500) {
+      lastPress = 0;
+      if (isBackspace) window.history.back();
+      return;
+    }
+    lastPress = now;
+    setShowPanel((prev) => !prev);
+  };
+
+  // PC & Web
+  window.addEventListener("keydown", handleToggle);
+  window.addEventListener("contextmenu", handleToggle);
+
+  // Touch / TV: long-press detection
+  let touchTimer = null;
+  const handleTouchStart = () => {
+    touchTimer = setTimeout(() => setShowPanel((prev) => !prev), 800); // 0.8s long press
+  };
+  const handleTouchEnd = () => {
+    if (touchTimer) clearTimeout(touchTimer);
+  };
+  window.addEventListener("touchstart", handleTouchStart);
+  window.addEventListener("touchend", handleTouchEnd);
+
+  return () => {
+    window.removeEventListener("keydown", handleToggle);
+    window.removeEventListener("contextmenu", handleToggle);
+    window.removeEventListener("touchstart", handleTouchStart);
+    window.removeEventListener("touchend", handleTouchEnd);
+  };
+}, []);
 
   return (
   <div

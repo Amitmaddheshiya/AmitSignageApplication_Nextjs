@@ -38,6 +38,7 @@ export default function SidePanel({ settings, onClose, onChange }) {
   }, [settings]);
 
   const apply = async () => {
+      onClose();
     try {
       const deviceId = localStorage.getItem("signage_device_id");
       if (!deviceId) throw new Error("Device ID missing");

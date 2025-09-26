@@ -6,8 +6,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev_jwt_secret';
 
 export async function GET(req) {
   try {
-    const cookie = req.headers.get('cookie') || '';
-    const m = cookie.match(/signage_auth=([^;]+)/);
+   const cookie = req.headers.get('cookie') || '';
+const m = cookie.match(/signage_auth=([^;]+)/);
     if (!m) return new Response(JSON.stringify({ user: null }), { status: 200 });
 
     const token = m[1];

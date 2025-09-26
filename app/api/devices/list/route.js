@@ -2,18 +2,18 @@ import { NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
 import jwt from "jsonwebtoken";
 
+const JWT_SECRET = process.env.JWT_SECRET;
+
 export async function GET(req) {
   try {
-    // 🔑 Auth check
-    const auth = req.headers.get("authorization");
-    if (!auth) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const token = auth.split(" ")[1];
-    const secret = process.env.JWT_SECRET;
+    const cookie = req.headers.get("cookie") || '';
+    const m = cookie.match(/signage_auth=([^;]+)/);
+    if (!m) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const token = m[1];
     let decoded;
     try {
-      decoded = jwt.verify(token, secret);
+      decoded = jwt.verify(token, JWT_SECRET);
     } catch (e) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }

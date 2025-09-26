@@ -69,31 +69,37 @@ export default function GridCell({ id, media = [], onReplace, settings }) {
     });
   }, [currentIndex, settings?.slideDirection]);
 
-  const handleInput = async (e) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-    const limitedFiles = files.slice(0, 5);
+const [inputKey, setInputKey] = useState(0);
 
-    const toSave = [];
-    const created = [];
-    for (const f of limitedFiles) {
-      const idf = Date.now() + "-" + f.name;
-      toSave.push({ id: idf, name: f.name, type: f.type, blob: f });
-      created.push({
-        id: idf,
-        type: f.type.startsWith("image") ? "image" : "video",
-        name: f.name,
-        url: URL.createObjectURL(f),
-      });
-    }
+const handleInput = async (e) => {
+  const files = Array.from(e.target.files || []);
+  if (files.length === 0) return;
 
-    await clearMedia(id);
-    await saveMedia(id, toSave);
-    setItems(created);
-    setCurrentIndex(0);
-    onReplace && onReplace(created);
-    e.target.value = "";
-  };
+  const limitedFiles = files.slice(0, 5);
+  const toSave = [];
+  const created = [];
+
+  for (const f of limitedFiles) {
+    const idf = Date.now() + "-" + f.name;
+    toSave.push({ id: idf, name: f.name, type: f.type, blob: f });
+    created.push({
+      id: idf,
+      type: f.type.startsWith("image") ? "image" : "video",
+      name: f.name,
+      url: URL.createObjectURL(f),
+    });
+  }
+
+  await clearMedia(id);
+  await saveMedia(id, toSave);
+  setItems(created);
+  setCurrentIndex(0);
+  onReplace && onReplace(created);
+
+  // 🔹 Force input remount
+  setInputKey((k) => k + 1);
+};
+
 
   const openPicker = () => inputRef.current?.click();
 
@@ -112,6 +118,7 @@ export default function GridCell({ id, media = [], onReplace, settings }) {
       style={{ cursor: "pointer", position: "relative", overflow: "hidden"}}
     >
       <input
+      key={inputKey}  
         ref={inputRef}
         className="uploader"
         type="file"
@@ -161,7 +168,10 @@ export default function GridCell({ id, media = [], onReplace, settings }) {
                 style={{
                   width: "100%",
                   height: "100%",
-                  objectFit: "fit-to-screen",
+                  objectFit: "fill",
+                  pointerEvents: "none",    // ✅ also on image
+        backfaceVisibility: "hidden",
+        willChange: "transform",
                 }}
               />
             ) : (
@@ -175,7 +185,10 @@ export default function GridCell({ id, media = [], onReplace, settings }) {
                 style={{
                   width: "100%",
                   height: "100%",
-                  objectFit: "fit-to-screen",
+                  objectFit: "fill",
+                  pointerEvents: "none",    // ✅ also on image
+        backfaceVisibility: "hidden",
+        willChange: "transform",
                 }}
               />
             )}

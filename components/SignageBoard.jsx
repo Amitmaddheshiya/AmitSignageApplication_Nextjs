@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import GridCell from "./GridCell";
 import SidePanel from "./SidePanel";
 import { loadSettings, saveSettings, loadMedia } from "../lib/storage";
+import { Settings } from "lucide-react"; // 👈 icon
 
 // Helper: DB se token fetch
 async function fetchTokenFromDB(deviceId) {
@@ -38,7 +39,7 @@ export default function SignageBoard({ deviceId }) {
   });
   const [showPanel, setShowPanel] = useState(false);
 
-  // Load saved media and settings from IndexedDB
+  // Load saved media and settings
   useEffect(() => {
     (async () => {
       const s = await loadSettings(deviceId);
@@ -76,20 +77,16 @@ export default function SignageBoard({ deviceId }) {
     setGrids((prev) => ({ ...prev, [gridId]: items }));
   };
 
-  // Handle settings change from SidePanel
+  // Handle settings change
   const handleSettingsChange = async (s) => {
     const newSettings = { ...settings, ...s };
     setSettings(newSettings);
 
     try {
-      // IndexedDB update
       await saveSettings(deviceId, newSettings);
-
-      // MongoDB token fetch
       const token = await fetchTokenFromDB(deviceId);
       if (!token) throw new Error("No token available in DB");
 
-      // Server update
       await fetch("/api/settings/update", {
         method: "POST",
         headers: {
@@ -137,72 +134,108 @@ export default function SignageBoard({ deviceId }) {
   }, []);
 
   return (
-    <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
-      <div
-        className="grid-wrap"
-        style={{
-          display: "grid",
-          width: "100%",
-          height: "100%",
-          gridTemplateColumns:
-            settings.orientation === "horizontal"
-              ? settings.gridType === "2"
-                ? settings.selectRatio === "1:2"
-                  ? "1fr 2fr"
-                  : settings.selectRatio === "2:1"
-                  ? "2fr 1fr"
-                  : "1fr 1fr"
-                : "1fr"
-              : "1fr",
-          gridTemplateRows:
-            settings.orientation === "vertical" && settings.gridType === "2"
+  <div
+    style={{
+      width: "100vw",
+      height: "100vh",
+      display: "flex",
+      flexDirection: "column", // 👈 ऊपर grid, नीचे ticker
+      overflow: "hidden",
+      position: "relative",
+    }}
+  >
+    {/* 🔹 Grids */}
+    <div
+      className="grid-wrap"
+      style={{
+        flex: 1, // 👈 बचे हुए space grid ले लेगा
+        display: "grid",
+        width: "100%",
+        height: "100%",
+        gridTemplateColumns:
+          settings.orientation === "horizontal"
+            ? settings.gridType === "2"
               ? settings.selectRatio === "1:2"
                 ? "1fr 2fr"
                 : settings.selectRatio === "2:1"
                 ? "2fr 1fr"
                 : "1fr 1fr"
-              : "1fr",
-          transform: `rotate(${settings.rotation || 0}deg)`,
-          transformOrigin: "center center",
-        }}
-      >
+              : "1fr"
+            : "1fr",
+        gridTemplateRows:
+          settings.orientation === "vertical" && settings.gridType === "2"
+            ? settings.selectRatio === "1:2"
+              ? "1fr 2fr"
+              : settings.selectRatio === "2:1"
+              ? "2fr 1fr"
+              : "1fr 1fr"
+            : "1fr",
+        transform: `rotate(${settings.rotation || 0}deg)`,
+        transformOrigin: "center center",
+      }}
+    >
+      <GridCell
+        id="g1"
+        media={grids.g1}
+        onReplace={(items) => handleUploadReplace("g1", items)}
+        settings={{ ...settings, slideDirection: settings.slideDirectionG1 }}
+      />
+      {settings.gridType === "2" && (
         <GridCell
-          id="g1"
-          media={grids.g1}
-          onReplace={(items) => handleUploadReplace("g1", items)}
-          settings={{ ...settings, slideDirection: settings.slideDirectionG1 }}
-        />
-        {settings.gridType === "2" && (
-          <GridCell
-            id="g2"
-            media={grids.g2}
-            onReplace={(items) => handleUploadReplace("g2", items)}
-            settings={{ ...settings, slideDirection: settings.slideDirectionG2 }}
-          />
-        )}
-      </div>
-
-      {settings.tickerEnabled && (
-        <div
-          className="ticker"
-          style={{
-            background: settings.tickerBgColor,
-            color: settings.tickerFontColor,
-            fontFamily: settings.tickerFontFamily,
-            fontSize: settings.tickerFontSize,
-          }}
-        >
-          <div className="marquee">{settings.tickerText} &nbsp; &nbsp; {settings.tickerText}</div>
-        </div>
-      )}
-
-      {showPanel && (
-        <SidePanel
-          settings={settings}
-          onClose={() => setShowPanel(false)}
-          onChange={(s) => handleSettingsChange(s)}
+          id="g2"
+          media={grids.g2}
+          onReplace={(items) => handleUploadReplace("g2", items)}
+          settings={{ ...settings, slideDirection: settings.slideDirectionG2 }}
         />
       )}
     </div>
-  );
+
+    {/* 🔹 Ticker */}
+    {settings.tickerEnabled && (
+      <div
+        className="ticker"
+        style={{
+          minHeight: `${settings.tickerFontSize * 2}px`, // 👈 dynamic height
+          background: settings.tickerBgColor,
+          color: settings.tickerFontColor,
+          fontFamily: settings.tickerFontFamily,
+          fontSize: settings.tickerFontSize,
+          display: "flex",
+          alignItems: "center",
+          position: "relative",
+          overflow: "hidden",
+          padding: "0 40px 0 10px",
+        }}
+      >
+        <div className="marquee">
+          {settings.tickerText} &nbsp; &nbsp; {settings.tickerText}
+        </div>
+
+        {/* settings icon */}
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            right: "10px",
+            transform: "translateY(-50%)", // 👈 हमेशा center
+            cursor: "pointer",
+          }}
+          onClick={() => setShowPanel(true)}
+        >
+          <Settings size={22} className="text-white" />
+        </div>
+      </div>
+    )}
+
+    {/* 🔹 SidePanel */}
+    {showPanel && (
+      <SidePanel
+        settings={settings}
+        onClose={() => setShowPanel(false)}
+        onChange={(s) => handleSettingsChange(s)}
+      />
+    )}
+  </div>
+);
+
 }

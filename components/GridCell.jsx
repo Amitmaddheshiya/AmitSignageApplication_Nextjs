@@ -109,7 +109,7 @@ export default function GridCell({ id, media = [], onReplace, settings }) {
     <div
       className="cell"
       onClick={openPicker} // 👈 अब सिर्फ पूरा grid clickable रहेगा
-      style={{ cursor: "pointer", position: "relative" }}
+      style={{ cursor: "pointer", position: "relative", overflow: "hidden"}}
     >
       <input
         ref={inputRef}
@@ -149,6 +149,9 @@ export default function GridCell({ id, media = [], onReplace, settings }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+               pointerEvents: "none",        // 👈 mouse cursor won't block animation
+    backfaceVisibility: "hidden", // 👈 fix rendering glitch
+    willChange: "transform",      // 👈 GPU acceleration
             }}
           >
             {items[currentIndex].type === "image" ? (

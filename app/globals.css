@@ -51,8 +51,10 @@ img, video{ max-width:100%; border-radius:6px; }
 }
 
 .slide-enter-active {
-  transform: translate3d(0,0,0); /* force GPU layer */
-   will-change: transform;
+transform: translate3d(0,0,0); /* GPU */
+  backface-visibility: hidden;
+  pointer-events: none;
+  will-change: transform;
   opacity: 1;
 }
 

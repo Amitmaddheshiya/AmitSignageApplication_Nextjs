@@ -7,9 +7,13 @@ export default function GridCell({ id, media = [], onReplace, settings }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [animateKey, setAnimateKey] = useState(0);
   const [slideClass, setSlideClass] = useState("");
+  const [videoReady, setVideoReady] = useState(true);
+  const [inputKey, setInputKey] = useState(0);
+
   const inputRef = useRef();
   const videoRef = useRef();
   const timerRef = useRef();
+  const nextVideoRef = useRef(); // 🔹 preloading next video
 
   // Load saved media
   useEffect(() => {
@@ -42,7 +46,7 @@ export default function GridCell({ id, media = [], onReplace, settings }) {
     };
   }, []);
 
-  // autoplay
+  // autoplay for images
   useEffect(() => {
     if (items.length === 0) return;
     const curr = items[currentIndex];
@@ -52,6 +56,7 @@ export default function GridCell({ id, media = [], onReplace, settings }) {
         setCurrentIndex((i) => {
           const next = (i + 1) % items.length;
           setAnimateKey(Date.now());
+          setVideoReady(true); // reset for next media
           return next;
         });
       }, (settings?.imageDuration || 5) * 1000);
@@ -69,56 +74,74 @@ export default function GridCell({ id, media = [], onReplace, settings }) {
     });
   }, [currentIndex, settings?.slideDirection]);
 
-const [inputKey, setInputKey] = useState(0);
+  // handle file input
+  const handleInput = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-const handleInput = async (e) => {
-  const files = Array.from(e.target.files || []);
-  if (files.length === 0) return;
+    const limitedFiles = files.slice(0, 5);
+    const toSave = [];
+    const created = [];
 
-  const limitedFiles = files.slice(0, 5);
-  const toSave = [];
-  const created = [];
+    for (const f of limitedFiles) {
+      const idf = Date.now() + "-" + f.name;
+      toSave.push({ id: idf, name: f.name, type: f.type, blob: f });
+      created.push({
+        id: idf,
+        type: f.type.startsWith("image") ? "image" : "video",
+        name: f.name,
+        url: URL.createObjectURL(f),
+      });
+    }
 
-  for (const f of limitedFiles) {
-    const idf = Date.now() + "-" + f.name;
-    toSave.push({ id: idf, name: f.name, type: f.type, blob: f });
-    created.push({
-      id: idf,
-      type: f.type.startsWith("image") ? "image" : "video",
-      name: f.name,
-      url: URL.createObjectURL(f),
-    });
-  }
+    await clearMedia(id);
+    await saveMedia(id, toSave);
+    setItems(created);
+    setCurrentIndex(0);
+    onReplace && onReplace(created);
 
-  await clearMedia(id);
-  await saveMedia(id, toSave);
-  setItems(created);
-  setCurrentIndex(0);
-  onReplace && onReplace(created);
-
-  // 🔹 Force input remount
-  setInputKey((k) => k + 1);
-};
-
+    // 🔹 Force input remount
+    setInputKey((k) => k + 1);
+    setVideoReady(true);
+  };
 
   const openPicker = () => inputRef.current?.click();
 
+  // handle video end
   const onVideoEnded = () => {
     setCurrentIndex((i) => {
       const next = (i + 1) % items.length;
       setAnimateKey(Date.now());
+      setVideoReady(false); // prepare loading indicator for next video
       return next;
     });
+  };
+
+  // pre-load next video for smooth slide
+  useEffect(() => {
+    if (items.length === 0) return;
+    const nextIndex = (currentIndex + 1) % items.length;
+    if (items[nextIndex].type === "video") {
+      const vid = document.createElement("video");
+      vid.src = items[nextIndex].url;
+      vid.preload = "auto";
+      vid.muted = true;
+      nextVideoRef.current = vid;
+    }
+  }, [currentIndex, items]);
+
+  const onVideoLoaded = () => {
+    setVideoReady(true);
   };
 
   return (
     <div
       className="cell"
-      onClick={openPicker} // 👈 अब सिर्फ पूरा grid clickable रहेगा
-      style={{ cursor: "pointer", position: "relative", overflow: "hidden"}}
+      onClick={openPicker}
+      style={{ cursor: "pointer", position: "relative", overflow: "hidden" }}
     >
       <input
-      key={inputKey}  
+        key={inputKey}
         ref={inputRef}
         className="uploader"
         type="file"
@@ -129,7 +152,7 @@ const handleInput = async (e) => {
       />
 
       <div
-        className="media-grid "
+        className="media-grid"
         style={{
           width: "100%",
           height: "100%",
@@ -156,9 +179,9 @@ const handleInput = async (e) => {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-               pointerEvents: "none",        // 👈 mouse cursor won't block animation
-    backfaceVisibility: "hidden", // 👈 fix rendering glitch
-    willChange: "transform",      // 👈 GPU acceleration
+              pointerEvents: "none",
+              backfaceVisibility: "hidden",
+              willChange: "transform",
             }}
           >
             {items[currentIndex].type === "image" ? (
@@ -168,33 +191,60 @@ const handleInput = async (e) => {
                 style={{
                   width: "100%",
                   height: "100%",
-                  objectFit: "fill",
-                  pointerEvents: "none",    // ✅ also on image
-        backfaceVisibility: "hidden",
-        willChange: "transform",
+                  objectFit: "cover",
+                  pointerEvents: "none",
+                  backfaceVisibility: "hidden",
+                  willChange: "transform",
                 }}
               />
             ) : (
-              <video
-                ref={videoRef}
-                src={items[currentIndex].url}
-                autoPlay
-                playsInline
-                muted
-                onEnded={onVideoEnded}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "fill",
-                  pointerEvents: "none",    // ✅ also on image
-        backfaceVisibility: "hidden",
-        willChange: "transform",
-                }}
-              />
+              <>
+                {!videoReady && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      width: "50px",
+                      height: "50px",
+                      border: "4px solid white",
+                      borderTop: "4px solid gray",
+                      borderRadius: "50%",
+                      animation: "spin 1s linear infinite",
+                      zIndex: 10,
+                    }}
+                  />
+                )}
+                <video
+                  ref={videoRef}
+                  src={items[currentIndex].url}
+                  autoPlay
+                  playsInline
+                  muted
+                  onEnded={onVideoEnded}
+                  onCanPlayThrough={onVideoLoaded}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    pointerEvents: "none",
+                    backfaceVisibility: "hidden",
+                    willChange: "transform",
+                  }}
+                />
+              </>
             )}
           </div>
         )}
       </div>
+
+      {/* 🔹 spinner animation */}
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg);}
+            100% { transform: rotate(360deg);}
+          }
+        `}
+      </style>
     </div>
   );
 }

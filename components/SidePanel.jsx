@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { saveSettings } from "../lib/storage";
 
-// Fetch token helper
 async function fetchTokenFromDB(deviceId) {
   try {
     const res = await fetch(`/api/devices/getToken?deviceId=${encodeURIComponent(deviceId)}`);
@@ -21,13 +20,14 @@ export default function SidePanel({ settings, onClose, onChange }) {
 
   useEffect(() => {
     setLocal({
-      gridType: settings.gridType || "2",
+      gridType: settings.gridType || "1",
       slideDirectionG1: settings.slideDirectionG1 || "left",
       slideDirectionG2: settings.slideDirectionG2 || "right",
+      slideDirectionG3: settings.slideDirectionG3 || "up",
       selectRatio: settings.selectRatio || "16:9",
       imageDuration: settings.imageDuration ?? 5,
       tickerEnabled: settings.tickerEnabled ?? true,
-      tickerText: settings.tickerText || "Welcome to Signage!",
+      tickerText: settings.tickerText || "Welcome to NextView Signage Developed By Amit!",
       tickerFontSize: settings.tickerFontSize ?? 20,
       tickerFontFamily: settings.tickerFontFamily || "Arial, sans-serif",
       tickerFontColor: settings.tickerFontColor || "#ffffff",
@@ -38,13 +38,12 @@ export default function SidePanel({ settings, onClose, onChange }) {
   }, [settings]);
 
   const apply = async () => {
-      onClose();
+    onClose();
     try {
       const deviceId = localStorage.getItem("signage_device_id");
       if (!deviceId) throw new Error("Device ID missing");
 
       await saveSettings(deviceId, local);
-
       const token = await fetchTokenFromDB(deviceId);
       if (!token) throw new Error("No token available in DB");
 
@@ -70,12 +69,14 @@ export default function SidePanel({ settings, onClose, onChange }) {
         {/* Header */}
         <div style={styles.header}>
           <h2 style={{ margin: 0, color: "#007BFF" }}>🎨 Customization</h2>
-          <button style={styles.closeBtn} onClick={onClose}>✕</button>
+          <button style={styles.closeBtn} onClick={onClose}>
+            ✕
+          </button>
         </div>
 
         {/* Scrollable Content */}
         <div style={styles.content}>
-          {/* Grid & Layout Section */}
+          {/* Grid & Layout */}
           <section style={styles.section}>
             <h4 style={styles.sectionTitle}>📐 Grid & Layout</h4>
             <div style={styles.formRow}>
@@ -84,8 +85,10 @@ export default function SidePanel({ settings, onClose, onChange }) {
                 value={local.gridType}
                 onChange={(e) => setLocal({ ...local, gridType: e.target.value })}
               >
-                <option value="2">2 Grid</option>
                 <option value="1">1 Grid</option>
+                <option value="2">2 Grid</option>
+                <option value="3">3 Grid</option>
+               
               </select>
             </div>
 
@@ -114,63 +117,98 @@ export default function SidePanel({ settings, onClose, onChange }) {
             </div>
           </section>
 
-          {/* Slide Settings */}
-          <section style={styles.section}>
-            <h4 style={styles.sectionTitle}>🖼 Slide Settings</h4>
-            <div style={styles.formRow}>
-              <label>Slide Direction (Grid 1)</label>
-              <select
-                value={local.slideDirectionG1}
-                onChange={(e) => setLocal({ ...local, slideDirectionG1: e.target.value })}
-              >
-                <option value="left">Left</option>
-                <option value="right">Right</option>
-                <option value="up">Up</option>
-                <option value="down">Down</option>
-              </select>
-            </div>
+  
+        {/* Slide Settings */}
+<section style={styles.section}>
+  <h4 style={styles.sectionTitle}>🖼 Slide Settings</h4>
 
-            <div style={styles.formRow}>
-              <label>Slide Direction (Grid 2)</label>
-              <select
-                value={local.slideDirectionG2}
-                onChange={(e) => setLocal({ ...local, slideDirectionG2: e.target.value })}
-              >
-                <option value="left">Left</option>
-                <option value="right">Right</option>
-                <option value="up">Up</option>
-                <option value="down">Down</option>
-              </select>
-            </div>
+  {Number(local.gridType) >= 1 && (
+    <div style={styles.formRow}>
+      <label>Slide Direction (Grid 1)</label>
+      <select
+        value={local.slideDirectionG1}
+        onChange={(e) => setLocal({ ...local, slideDirectionG1: e.target.value })}
+      >
+        <option value="left">Left</option>
+        <option value="right">Right</option>
+        <option value="up">Up</option>
+        <option value="down">Down</option>
+      </select>
+    </div>
+  )}
 
-            {local.gridType === "2" && (
-              <div style={styles.formRow}>
-                <label>Select Ratio</label>
-                <select
-                  value={local.selectRatio}
-                  onChange={(e) => setLocal({ ...local, selectRatio: e.target.value })}
-                >
-                  <option>1:1</option>
-                  <option>1:2</option>
-                  <option>2:1</option>
-                  <option>1:3</option>
-                  <option>3:1</option>
-                  <option>Custom</option>
-                </select>
-              </div>
-            )}
+  {Number(local.gridType) >= 2 && (
+    <div style={styles.formRow}>
+      <label>Slide Direction (Grid 2)</label>
+      <select
+        value={local.slideDirectionG2}
+        onChange={(e) => setLocal({ ...local, slideDirectionG2: e.target.value })}
+      >
+        <option value="left">Left</option>
+        <option value="right">Right</option>
+        <option value="up">Up</option>
+        <option value="down">Down</option>
+      </select>
+    </div>
+  )}
 
-            <div style={styles.formRow}>
-              <label>Slide Duration (sec)</label>
-              <input
-                type="number"
-                value={local.imageDuration}
-                onChange={(e) => setLocal({ ...local, imageDuration: Number(e.target.value) })}
-              />
-            </div>
-          </section>
+  {Number(local.gridType) >= 3 && (
+    <div style={styles.formRow}>
+      <label>Slide Direction (Grid 3)</label>
+      <select
+        value={local.slideDirectionG3}
+        onChange={(e) => setLocal({ ...local, slideDirectionG3: e.target.value })}
+      >
+        <option value="left">Left</option>
+        <option value="right">Right</option>
+        <option value="up">Up</option>
+        <option value="down">Down</option>
+      </select>
+    </div>
+  )}
 
-          {/* Ticker Section */}
+  {/* Select Ratio */}
+  {local.gridType === "2" && (
+    <div style={styles.formRow}>
+      <label>Select Ratio</label>
+      <select
+        value={local.selectRatio}
+        onChange={(e) => setLocal({ ...local, selectRatio: e.target.value })}
+      >
+        <option>1:1</option>
+        <option>1:2</option>
+        <option>2:1</option>
+      </select>
+    </div>
+  )}
+
+  {local.gridType === "3" && (
+    <div style={styles.formRow}>
+      <label>Select Ratio</label>
+      <select
+        value={local.selectRatio}
+        onChange={(e) => setLocal({ ...local, selectRatio: e.target.value })}
+      >
+        <option>1:1:1</option>
+        <option>2:1:1</option>
+        <option>1:2:1</option>
+        <option>1:1:2</option>
+      </select>
+    </div>
+  )}
+
+  <div style={styles.formRow}>
+    <label>Slide Duration (sec)</label>
+    <input
+      type="number"
+      value={local.imageDuration}
+      onChange={(e) => setLocal({ ...local, imageDuration: Number(e.target.value) })}
+    />
+  </div>
+</section>
+
+
+          {/* Ticker */}
           <section style={styles.section}>
             <h4 style={styles.sectionTitle}>📝 Ticker Settings</h4>
             <div style={styles.formRow}>
@@ -180,13 +218,14 @@ export default function SidePanel({ settings, onClose, onChange }) {
                   checked={local.tickerEnabled}
                   onChange={(e) => setLocal({ ...local, tickerEnabled: e.target.checked })}
                 />
-                Ticker Enabled
+                Enable Ticker
               </label>
             </div>
 
             <div style={styles.formRow}>
               <label>Ticker Text</label>
               <input
+                type="text"
                 value={local.tickerText}
                 onChange={(e) => setLocal({ ...local, tickerText: e.target.value })}
               />
@@ -204,6 +243,7 @@ export default function SidePanel({ settings, onClose, onChange }) {
             <div style={styles.formRow}>
               <label>Font Family</label>
               <input
+                type="text"
                 value={local.tickerFontFamily}
                 onChange={(e) => setLocal({ ...local, tickerFontFamily: e.target.value })}
               />
@@ -220,7 +260,7 @@ export default function SidePanel({ settings, onClose, onChange }) {
 
             <div style={styles.formRow}>
               <label>Background Color</label>
-              <input
+             <input
                 type="color"
                 value={local.tickerBgColor}
                 onChange={(e) => setLocal({ ...local, tickerBgColor: e.target.value })}
@@ -229,8 +269,8 @@ export default function SidePanel({ settings, onClose, onChange }) {
           </section>
         </div>
 
-        {/* Apply Button Always Visible */}
-        <div style={styles.applyWrapper}>
+        {/* Apply Button */}
+        <div style={styles.footer}>
           <button style={styles.applyBtn} onClick={apply}>
             ✅ Apply & Close
           </button>
@@ -240,78 +280,82 @@ export default function SidePanel({ settings, onClose, onChange }) {
   );
 }
 
-// Styles
 const styles = {
   overlay: {
     position: "fixed",
     top: 0,
     right: 0,
-    bottom: 0,
-    left: 0,
-    background: "rgba(0,0,0,0.5)",
+    width: "100%",
+    height: "100%",
+    background: "rgba(0,0,0,0.4)",
     display: "flex",
-    justifyContent: "flex-start",
-    zIndex: 1000,
+    justifyContent: "flex-end",
+    zIndex: 9999,
   },
   panel: {
+    width: "340px",
     background: "#fff",
-    width: 380,
     height: "100%",
     display: "flex",
     flexDirection: "column",
-    boxShadow: "-4px 0 15px rgba(0,0,0,0.3)",
-    overflow: "hidden",
+    borderLeft: "3px solid rgb(19, 126, 240)",
+    boxShadow: "-4px 0px 10px rgba(0,0,0,0.2)",
   },
   header: {
+    padding: "12px 16px",
+    background: "#f0f4ff",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "15px 20px",
-    borderBottom: "2px solid #007BFF",
+    borderBottom: "1px solid #ddd",
   },
   closeBtn: {
-    background: "none",
     border: "none",
-    fontSize: 22,
+    background: "transparent",
+    fontSize: "18px",
     cursor: "pointer",
-    color: "#007BFF",
+    color: "#333",
   },
   content: {
     flex: 1,
-    padding: "15px 20px",
     overflowY: "auto",
+    padding: "12px 16px",
   },
   section: {
-    marginBottom: 20,
-    paddingBottom: 10,
-    borderBottom: "1px solid #e0e0e0",
-    
+    marginBottom: "18px",
+    borderBottom: "1px dashed #ddd",
+    paddingBottom: "12px",
   },
   sectionTitle: {
-    marginBottom: 10,
-    fontSize: 16,
-    fontWeight: 600,
+    marginBottom: "10px",
     color: "#007BFF",
+    fontSize: "16px",
   },
   formRow: {
     display: "flex",
     flexDirection: "column",
-    marginBottom: 12,
+    marginBottom: "12px",
+    gap: "4px",
+    color: "black",
+    fontSize: "12px",
+    fontWeight: "bold",
+    marginTop: "24px",
   },
-  applyWrapper: {
-    padding: 15,
-    borderTop: "1px solid #e0e0e0",
+  footer: {
+    padding: "12px",
+    borderTop: "1px solid #ddd",
     background: "#f9f9f9",
   },
   applyBtn: {
-    background: "#007BFF",
-    color: "#fff",
-    padding: "12px 20px",
-    border: "none",
-    borderRadius: 6,
-    cursor: "pointer",
-    fontWeight: "bold",
     width: "100%",
-    fontSize: 16,
+    padding: "10px",
+    fontSize: "16px",
+    fontWeight: "bold",
+    background: "#007BFF",
+    border: "none",
+    borderRadius: "6px",
+    color: "#fff",
+    cursor: "pointer",
   },
 };
+
